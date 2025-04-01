@@ -19,6 +19,30 @@
 	}
 }
 
+button {
+	margin-top: 1rem; /* mt-4 */
+	padding: 0.75rem 1.5rem; /* px-6 py-3 */
+	font-size: 1.125rem; /* text-lg */
+	font-weight: 600; /* font-semibold */
+	color: white; /* text-white */
+	background-color: #282828; /* bg-blue-600 */
+	border-radius: 0.5rem; /* rounded-lg */
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
+	transition:
+		background-color 0.1s ease-in-out,
+		transform 0.1s ease-in-out;
+}
+
+button:hover {
+	background-color: #444444; /* hover:bg-blue-700 */
+}
+
+button:active {
+	outline: none; /* focus:outline-none */
+	box-shadow: none; /* focus:ring-2 focus:ring-blue-500 */
+	transform: translateY(4px);
+}
+
 body {
 	background: var(--background);
 	color: var(--foreground);
