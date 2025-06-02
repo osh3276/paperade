@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
-export default function SearchBar() {
+function SearchBarContent() {
 	const [query, setQuery] = useState("");
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -50,5 +50,13 @@ export default function SearchBar() {
 				</label>
 			</div>
 		</div>
+	);
+}
+
+export default function SearchBar() {
+	return (
+		<Suspense fallback={<div>Loading search...</div>}>
+			<SearchBarContent />
+		</Suspense>
 	);
 }

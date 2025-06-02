@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "@/app/components/SearchBar";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,9 @@ const SearchResults = () => {
 	return (
 		<div className="flex flex-col p-6 gap-8">
 			<h1 className="text-lg font-bold">paperade</h1>
-			<SearchBar />
+			<Suspense fallback={<div>Loading search...</div>}>
+				<SearchBar />
+			</Suspense>
 
 			{loading && <div>Loading...</div>}
 			{!loading && papers.length > 0 && (
@@ -145,4 +147,10 @@ const SearchResults = () => {
 	);
 };
 
-export default SearchResults;
+export default function Page() {
+	return (
+		<Suspense fallback={<div>Loading...</div>}>
+			<SearchResults />
+		</Suspense>
+	);
+}
