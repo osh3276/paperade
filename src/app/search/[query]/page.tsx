@@ -2,8 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { parseStringPromise } from "xml2js";
 import SearchBar from "@/app/components/SearchBar";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+	CardContent,
+	CardFooter,
+} from "@/components/ui/card";
 
 type Paper = {
 	id: string;
@@ -13,11 +21,13 @@ type Paper = {
 	published: string;
 	pdfLink: string;
 	texLink: string;
+	aiSummary: string;
 };
 
 const SearchResults = () => {
 	const searchParams = useSearchParams();
 	const query = searchParams.get("search_query") ?? ""; // Get the query from the URL
+	const useAiSummary = searchParams.get("aiSummary") === "true";
 	const [papers, setPapers] = useState<Paper[]>([]); // State for papers fetched from API
 	const [loading, setLoading] = useState<boolean>(false); // State for loading indicator
 
@@ -27,101 +37,109 @@ const SearchResults = () => {
 		console.log("query:", query);
 
 		const fetchData = async () => {
-			setLoading(true); // Start loading
+			setLoading(true);
 			try {
 				const response = await fetch(
-					`https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(query)}&max_results=20&sortBy=submittedDate&sortOrder=descending`,
+					`/api/search?q=${encodeURIComponent(query)}&aiSummary=${useAiSummary}`,
 				);
 
 				if (!response.ok) {
 					throw new Error(`HTTP error! status: ${response.status}`);
 				}
 
-				const xml = await response.text();
-				console.log(response);
-				console.log("fetched papers");
-
-				// Parse the XML response into JSON format
-				const json = await parseStringPromise(xml);
-				const entries = json.feed.entry ?? [];
-				console.log("parsed xml");
-
-				// Map the entries to a paper object
-				const papersData: Paper[] = entries.map((entry: any) => ({
-					id: entry.id[0] ?? "",
-					title: entry.title[0] ?? "Untitled",
-					summary: entry.summary[0] ?? "No summary available.",
-					authors: entry.author?.map((a: any) => a.name[0]) ?? [],
-					published: entry.published[0] ?? "",
-					pdfLink:
-						entry.link.find((l: any) => l.$.title === "pdf")?.$
-							.href ?? "",
-					texLink:
-						entry.link.find((l: any) => l.$.title === "tex")?.$
-							.href ?? "",
-				}));
-				console.log("mapped papers");
-
-				setPapers(papersData); // Set the fetched papers data
+				const data = await response.json();
+				setPapers(data.papers);
 			} catch (error) {
 				console.error("Error fetching data:", error);
 			} finally {
-				setLoading(false); // Stop loading
+				setLoading(false);
 			}
 		};
 
-		fetchData(); // Fetch the data when query is available
-		console.log("fetched data");
-	}, [query]);
+		fetchData();
+	}, [query, useAiSummary]);
 
 	return (
-		<div className="p-6">
+		<div className="flex flex-col p-6 gap-8">
+			<h1 className="text-lg font-bold">paperade</h1>
 			<SearchBar />
 
 			{loading && <div>Loading...</div>}
-
 			{!loading && papers.length > 0 && (
-				<ul>
+				<div className="flex flex-col gap-6">
 					{papers.map((paper) => (
-						<li key={paper.id} className="mb-4">
-							<h2 className="text-xl font-bold">
-								<a href={paper.id} className="hover:underline">
-									{paper.title}
-								</a>
-							</h2>
-							<p className="text-sm text-gray-600">
-								Published: {paper.published}
-							</p>
-							<p>{paper.summary.slice(0, 500)}...</p>
-							<div className="mt-2">
-								{paper.pdfLink && (
+						<Card
+							key={paper.id}
+							className="hover:shadow-md transition-shadow"
+						>
+							<CardHeader>
+								<CardTitle>
 									<a
-										href={paper.pdfLink}
-										className="mr-4 hover:underline"
+										href={paper.id}
+										className="text-lg hover:underline"
 									>
-										Download PDF
+										{paper.title}
 									</a>
+								</CardTitle>
+								<CardDescription>
+									Published:{" "}
+									{paper.published
+										? new Date(
+												paper.published,
+											).toLocaleDateString("en-US", {
+												year: "numeric",
+												month: "long",
+												day: "numeric",
+												hour: "numeric",
+												minute: "numeric",
+												second: "numeric",
+											})
+										: "Unknown"}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								{useAiSummary ? (
+									<p className="leading-relaxed">
+										{paper.aiSummary}
+									</p>
+								) : (
+									<p className="line-clamp-3 leading-relaxed">
+										{paper.summary}
+									</p>
+								)}
+							</CardContent>
+							<CardFooter className="gap-4">
+								{paper.pdfLink && (
+									<Button asChild>
+										<a
+											href={paper.pdfLink}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											Download PDF
+										</a>
+									</Button>
 								)}
 								{paper.texLink && (
-									<a
-										href={paper.texLink}
-										className="text-blue-600 hover:underline"
-									>
-										Download TeX Source
-									</a>
+									<Button asChild variant="outline">
+										<a
+											href={paper.texLink}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											Download TeX Source
+										</a>
+									</Button>
 								)}
-							</div>
-						</li>
+							</CardFooter>
+						</Card>
 					))}
-				</ul>
+				</div>
 			)}
 
 			{/* No results found */}
 			{!loading && papers.length === 0 && query && (
-				<p>
-					No results found for &quot;{query}&quot;. Try another
-					search.
-				</p>
+				<p>No results found for &quot;{query}&quot;.</p>
 			)}
 		</div>
 	);
