@@ -60,7 +60,7 @@ const SearchResults = () => {
 	}, [query, useAiSummary]);
 
 	return (
-		<div className="flex flex-col p-6 gap-8">
+		<div className="flex flex-col p-6 gap-8 max-w-[1280px] m-auto">
 			<h1 className="text-3xl font-bold">paperade</h1>
 			<Suspense fallback={<div>Loading search...</div>}>
 				<SearchBar />
@@ -118,7 +118,7 @@ const SearchResults = () => {
 											target="_blank"
 											rel="noopener noreferrer"
 										>
-											Download PDF
+											View PDF
 										</a>
 									</Button>
 								)}
